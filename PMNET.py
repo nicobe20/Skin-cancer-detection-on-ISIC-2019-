@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import os
 
 IMG_SIZE = (224, 224)
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 DATA_DIR = "/home/ds3master/college/Neural_network_works/Skin-cancer-detection-on-ISIC-2019-/Dataset-split"
 
 train_datagen = ImageDataGenerator(
@@ -67,7 +67,7 @@ model.compile(
 
 history = model.fit(
     train_generator,
-    epochs=20,
+    epochs=10,  #hay que cambiar esto pero que mrda mas demorada de correr
     validation_data=val_generator
 )
 
