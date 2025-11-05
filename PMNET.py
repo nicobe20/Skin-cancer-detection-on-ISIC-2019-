@@ -71,7 +71,7 @@ history = model.fit(
     validation_data=val_generator
 )
 
- #ploting
+ 
 
 plt.plot(history.history['accuracy'], label='train acc')
 plt.plot(history.history['val_accuracy'], label='val acc')
@@ -79,5 +79,5 @@ plt.legend()
 plt.title('Training vs Validation Accuracy')
 plt.show()
 
- #Model saving
-model.save("cnn_from_scratch_isic.h5")
+
+model.save("cnn_from_scratch_isic.keras")

@@ -68,8 +68,7 @@ val_generator = val_datagen.flow_from_directory(
     class_mode='categorical'
 )
 
-
-# Freeze the convolutional base (don’t train these layers yet)
+#Freezing all model layers (tested with 150 and 200)
 base_model.trainable = False
 
 x = base_model.output
