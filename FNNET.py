@@ -1,10 +1,12 @@
 #For CNN and finetuning
-from tensorflow.keras.applications import EfficientNetB0
+#from tensorflow.keras.applications import EfficientNetB0
+from tensorflow.keras.applications import EfficientNetB2 #I am testing this to see what better results we get.
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Dropout
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.applications.efficientnet import preprocess_input
+from tensorflow.keras.callbacks import LearningRateScheduler
 #from sklearn.metrics import classification_report, confusion_matrix for the confusion matrix
 #Checkpoints and class weights(the data split is very VERY unbalanced the majority of images are of NV being 10,300)
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
@@ -14,8 +16,20 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
+
+def warmup(epoch):
+    initial_lr = 1e-6
+    max_lr = 1e-5
+    warmup_epochs = 5
+    if epoch < warmup_epochs:
+        return initial_lr + (max_lr - initial_lr) * (epoch / warmup_epochs)
+    else:
+        return max_lr * (0.95 ** (epoch - warmup_epochs))
+    
+lr_scheduler = LearningRateScheduler(warmup)
+
 # Load base model (pretrained on ImageNet) this is gonna change
-base_model = EfficientNetB0(
+base_model = EfficientNetB2(
     weights='imagenet',        
     include_top=False,         
     input_shape=(224, 224, 3)
@@ -23,7 +37,7 @@ base_model = EfficientNetB0(
 
 #Guys same as before i am telling which image folder it should access, this is the image with the dataset split if you need to split your dataset please use the SCRIPT
 IMG_SIZE = (224, 224)
-BATCH_SIZE = 64
+BATCH_SIZE = 32 #change to 64 if using b0 i am using b2 so lowering the batch size (note my vram mem is 6gb)
 DATA_DIR = "/home/ds3master/college/Neural_network_works/Skin-cancer-detection-on-ISIC-2019-/Dataset-split"
 
 
@@ -67,8 +81,8 @@ predictions = Dense(len(train_generator.class_indices), activation='softmax')(x)
 
 model = Model(inputs=base_model.input, outputs=predictions)
 
-model.compile(optimizer=Adam(learning_rate=1e-3),
-              loss='categorical_crossentropy',
+model.compile(optimizer=Adam(learning_rate=5e-6),
+              loss = 'categorical_crossentropy',
               metrics=['accuracy'])
 
 #Adding class weights as image data set is imbalance
@@ -83,7 +97,8 @@ class_weights = dict(enumerate(class_weights))
 #also adding callbacks
 callbacks = [
     EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True),
-    ModelCheckpoint("checkpoint_cancer_model.h5", save_best_only=True)
+    ModelCheckpoint("checkpoint_cancer_model.h5", save_best_only=True),
+    lr_scheduler
 ]
 
 history = model.fit(
@@ -96,13 +111,13 @@ history = model.fit(
 
 
 # Unfreeze the top N layers
-fine_tune_at = 200
-for layer in base_model.layers[-fine_tune_at:]:
+
+for layer in base_model.layers:
     layer.trainable = True
 
 
-model.compile(optimizer=Adam(learning_rate=1e-5),
-              loss='categorical_crossentropy',
+model.compile(optimizer=Adam(learning_rate=5e-6),
+              loss = 'categorical_crossentropy',
               metrics=['accuracy'])
 
 history_fine = model.fit(
@@ -143,5 +158,5 @@ plt.show()
 
 
 
-model.save("skin_cancer_finetuned.h5")
+model.save("skin_cancer_finetuned.keras")
 print(" Fine-tuned model saved!")
