@@ -67,7 +67,7 @@ model.compile(
 
 history = model.fit(
     train_generator,
-    epochs=10,  #hay que cambiar esto pero que mrda mas demorada de correr
+    epochs=20,  #hay que cambiar esto pero que mrda mas demorada de correr
     validation_data=val_generator
 )
 

@@ -12,7 +12,7 @@ from sklearn.utils.class_weight import compute_class_weight
 #General use
 import os 
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 # Load base model (pretrained on ImageNet) this is gonna change
 base_model = EfficientNetB0(
@@ -80,9 +80,10 @@ class_weights = compute_class_weight(
 )
 class_weights = dict(enumerate(class_weights))
 
+#also adding callbacks
 callbacks = [
-    EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True),
-    ModelCheckpoint("best_skin_cancer_model.h5", save_best_only=True)
+    EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True),
+    ModelCheckpoint("checkpoint_cancer_model.h5", save_best_only=True)
 ]
 
 history = model.fit(
@@ -95,7 +96,7 @@ history = model.fit(
 
 
 # Unfreeze the top N layers
-fine_tune_at = 150
+fine_tune_at = 200
 for layer in base_model.layers[-fine_tune_at:]:
     layer.trainable = True
 
@@ -107,11 +108,40 @@ model.compile(optimizer=Adam(learning_rate=1e-5),
 history_fine = model.fit(
     train_generator,
     validation_data=val_generator,
-    epochs=10,
+    epochs=20,
     class_weight=class_weights,
     callbacks=callbacks
 
 )
+
+# Plot training & validation accuracy values
+plt.figure(figsize=(12, 5))
+
+plt.subplot(1, 2, 1)
+plt.plot(history.history['accuracy'], label='Train (frozen)')
+plt.plot(history.history['val_accuracy'], label='Val (frozen)')
+plt.plot(history_fine.history['accuracy'], label='Train (fine-tuned)')
+plt.plot(history_fine.history['val_accuracy'], label='Val (fine-tuned)')
+plt.title('Model Accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.legend()
+
+# Plot training & validation loss values
+plt.subplot(1, 2, 2)
+plt.plot(history.history['loss'], label='Train (frozen)')
+plt.plot(history.history['val_loss'], label='Val (frozen)')
+plt.plot(history_fine.history['loss'], label='Train (fine-tuned)')
+plt.plot(history_fine.history['val_loss'], label='Val (fine-tuned)')
+plt.title('Model Loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.legend()
+
+plt.tight_layout()
+plt.show()
+
+
 
 model.save("skin_cancer_finetuned.h5")
 print(" Fine-tuned model saved!")
