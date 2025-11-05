@@ -97,7 +97,7 @@ class_weights = dict(enumerate(class_weights))
 #also adding callbacks
 callbacks = [
     EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True),
-    ModelCheckpoint("checkpoint_cancer_model.h5", save_best_only=True),
+    ModelCheckpoint("checkpoint_cancer_model.h5", save_best_only=True), #FORGOT TO CHANGE THIS TO .keras :(((
     lr_scheduler
 ]
 
